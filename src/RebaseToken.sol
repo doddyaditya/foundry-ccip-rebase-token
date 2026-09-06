@@ -13,7 +13,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     uint256 private constant PRECISION_FACTOR = 1e18;
     bytes32 private constant BURN_AND_MINT_ROLE = keccak256("BURN_AND_MINT_ROLE");
 
-    uint256 private s_interestRate = 5e10;
+    uint256 private s_interestRate = (5 * PRECISION_FACTOR) / 1e8;
     mapping(address user => uint256 interestRate) private s_userInterestRate;
     mapping(address user => uint256 timestamp) private s_userLastUpdatedTimestamp;
 
@@ -40,9 +40,9 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     }
 
     function _mintAccruedInterest(address _user) private {
-        uint256 principalBalance = super.balanceOf(_user);
+        uint256 principleBalance = super.balanceOf(_user);
         uint256 currentBalance = balanceOf(_user);
-        uint256 balanceIncrease = currentBalance - principalBalance;
+        uint256 balanceIncrease = currentBalance - principleBalance;
         s_userLastUpdatedTimestamp[_user] = block.timestamp;
         _mint(_user, balanceIncrease);
     }
@@ -80,13 +80,13 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     }
 
     function balanceOf(address _user) public view override returns (uint256) {
-        uint256 principalBalance = super.balanceOf(_user);
-        // balance = principalBalance + principalBalance * interestRate * timestampDiff
+        uint256 principleBalance = super.balanceOf(_user);
+        // balance = principleBalance + principleBalance * interestRate * timestampDiff
         // = principleBalance(1 + (interestRate * timestampDiff))
-        return principalBalance * _calculateAccumulatedUserInterestRate(_user) / PRECISION_FACTOR;
+        return principleBalance * _calculateAccumulatedUserInterestRate(_user) / PRECISION_FACTOR;
     }
 
-    function principalBalanceOf(address _user) external view returns (uint256) {
+    function principleBalanceOf(address _user) external view returns (uint256) {
         return super.balanceOf(_user);
     }
 
