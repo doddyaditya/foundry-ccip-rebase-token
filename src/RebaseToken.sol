@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.24;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {ERC20} from "@openzeppelin/contracts@5.1.0/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts@5.1.0/access/Ownable.sol";
+import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.sol";
 
 contract RebaseToken is ERC20, Ownable, AccessControl {
     error RebaseToken__InterestRateCanOnlyDecrease(uint256 oldInterestRate, uint256 newInterestRate);
@@ -21,21 +21,21 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
 
     constructor() ERC20("Rebase Token", "RBT") Ownable(msg.sender) {}
 
-    function grantBurnAndMintRole(address account) external onlyOwner returns (bool) {
-        return _grantRole(BURN_AND_MINT_ROLE, account);
+    function grantBurnAndMintRole(address _account) external onlyOwner returns (bool) {
+        return _grantRole(BURN_AND_MINT_ROLE, _account);
     }
 
-    function setInterestRate(uint256 newInterestRate) external {
-        if (newInterestRate > s_interestRate) {
-            revert RebaseToken__InterestRateCanOnlyDecrease(s_interestRate, newInterestRate);
+    function setInterestRate(uint256 _newInterestRate) external onlyOwner {
+        if (_newInterestRate > s_interestRate) {
+            revert RebaseToken__InterestRateCanOnlyDecrease(s_interestRate, _newInterestRate);
         }
-        s_interestRate = newInterestRate;
-        emit InterestRateSet(newInterestRate);
+        s_interestRate = _newInterestRate;
+        emit InterestRateSet(_newInterestRate);
     }
 
-    function mint(address _to, uint256 _amount) external onlyRole(BURN_AND_MINT_ROLE) {
+    function mint(address _to, uint256 _amount, uint256 _interestRate) external onlyRole(BURN_AND_MINT_ROLE) {
         _mintAccruedInterest(_to);
-        s_userInterestRate[_to] = s_interestRate;
+        s_userInterestRate[_to] = _interestRate;
         _mint(_to, _amount);
     }
 
@@ -74,7 +74,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
             _amount = balanceOf(_from);
         }
         if (balanceOf(_to) == 0) {
-            s_userInterestRate[_to] = s_userInterestRate[msg.sender];
+            s_userInterestRate[_to] = s_userInterestRate[_from];
         }
         return super.transferFrom(_from, _to, _amount);
     }
